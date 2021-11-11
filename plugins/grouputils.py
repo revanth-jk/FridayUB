@@ -363,6 +363,68 @@ async def ujwal_mote(client, message):
 
 
 @friday_on_cmd(
+    ["fpromote", "fprumote"],
+    only_if_admin=True,
+    group_only=True,
+    cmd_help={
+        "help": "Full-Promote Replied user or provide his ID!",
+        "example": "{ch}fpromote (reply to user message OR provide his ID)",
+    },
+)
+async def ujwal_fmote(client, message):
+    engine = message.Engine
+    pablo = await edit_or_reply(message, engine.get_string("PROCESSING"))
+    me_m = client.me
+    me_ = await message.chat.get_member(int(me_m.id))
+    if not me_.can_promote_members:
+        await pablo.edit(engine.get_string("NOT_ADMIN"))
+        return
+    asplit = get_text(message)
+    userl, Res = get_user(message, asplit)
+    if not userl:
+        await pablo.edit(
+            engine.get_string("TO_DO").format("Promote")
+        )
+        return
+    try:
+        user = await client.get_users(userl)
+    except BaseException as e:
+        await pablo.edit(engine.get_string("USER_MISSING").format(e))
+        return
+    userz = user.id
+    if not Res:
+        Res = "Admeme"
+    if userz == me_m.id:
+        await pablo.edit(engine.get_string("TF_DO_IT").format("Promote"))
+        return
+    try:
+        await client.promote_chat_member(
+            message.chat.id,
+            user.id,
+            can_manage_chat=me_.can_manage_chat,
+            can_change_info=me_.can_change_info,
+            can_delete_messages=me_.can_delete_messages,
+            can_restrict_members=me_.can_restrict_members,
+            can_invite_users=me_.can_invite_users,
+            can_pin_messages=me_.can_pin_messages,
+            can_promote_members=me_.can_promote_members,
+            can_manage_voice_chats=me_.can_manage_voice_chats,
+        )
+    except BaseException as e:
+        await pablo.edit(engine.get_string("FAILED_ADMIN_ACTION").format("FullPromote", e))
+        return
+    p = f"**#FullPromote** \n**User :** [{user.first_name}](tg://user?id={user.id}) \n**Chat :** `{message.chat.title}` \n**Title :** `{Res}`"
+    await pablo.edit(p)
+    log = LogIt(message)
+    await log.log_msg(client, p)
+    try:
+        if Res:
+            await client.set_administrator_title(message.chat.id, user.id, Res)
+    except:
+        pass
+
+
+@friday_on_cmd(
     ["demote", "demute"],
     only_if_admin=True,
     group_only=True,
